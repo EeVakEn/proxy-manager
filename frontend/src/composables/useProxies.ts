@@ -1,5 +1,6 @@
 import { ref, onMounted, onUnmounted } from 'vue'
 import { proxiesApi } from '@/api/proxies'
+import { useToast } from '@/composables/useToast'
 import type { Proxy, ProxyFormData, PaginationMeta } from '@/types/proxy'
 
 const POLL_INTERVAL = 10000
@@ -10,7 +11,7 @@ export function useProxies() {
   const meta    = ref<PaginationMeta | null>(null)
   const page    = ref(1)
   const loading = ref(false)
-  const error   = ref<string | null>(null)
+  const toast   = useToast()
 
   let pollTimer: ReturnType<typeof setInterval> | null = null
 
@@ -20,7 +21,7 @@ export function useProxies() {
       proxies.value = response.data
       meta.value    = response.meta
     } catch {
-      error.value = 'Failed to load proxy list'
+      toast.error('Failed to load proxy list')
     }
   }
 
@@ -32,19 +33,21 @@ export function useProxies() {
   async function addProxy(data: ProxyFormData) {
     await proxiesApi.create(data)
     await fetchProxies()
+    toast.success('Proxy added')
   }
 
   async function editProxy(id: number, data: Partial<ProxyFormData>) {
     const updated = await proxiesApi.update(id, data)
     const idx = proxies.value.findIndex(p => p.id === id)
     if (idx !== -1) proxies.value[idx] = updated
+    toast.success('Proxy updated')
   }
 
   async function deleteProxy(id: number) {
     await proxiesApi.remove(id)
-    // Go to previous page if last item on current page was deleted
     if (proxies.value.length === 1 && page.value > 1) page.value--
     await fetchProxies()
+    toast.success('Proxy deleted')
   }
 
   async function checkProxy(id: number) {
@@ -54,6 +57,7 @@ export function useProxies() {
 
     const updated = await proxiesApi.triggerCheck(id)
     if (idx !== -1 && proxy) proxies.value[idx] = updated
+    toast.info('Health check started')
   }
 
   onMounted(async () => {
@@ -67,5 +71,5 @@ export function useProxies() {
     if (pollTimer) clearInterval(pollTimer)
   })
 
-  return { proxies, meta, page, loading, error, goToPage, addProxy, editProxy, deleteProxy, checkProxy }
+  return { proxies, meta, page, loading, goToPage, addProxy, editProxy, deleteProxy, checkProxy }
 }

@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Jobs\CheckProxyHealth;
 use App\Models\Proxy;
 use App\Repositories\Contracts\ProxyRepositoryInterface;
+use BackedEnum;
 
 class ProxyService
 {
@@ -46,17 +47,18 @@ class ProxyService
 
         CheckProxyHealth::dispatch($proxy)->onQueue('proxies');
 
-        return $proxy->fresh();
+        return $proxy->fresh() ?? $proxy;
     }
 
     private function connectionChanged(Proxy $proxy, array $data): bool
     {
-        foreach (['host', 'port', 'type', 'login', 'password'] as $field) {
-            if (isset($data[$field]) && (string) $proxy->{$field}?->value ?? $proxy->{$field} !== (string) $data[$field]) {
-                return true;
-            }
-        }
+        return collect(['host', 'port', 'type', 'login', 'password'])
+            ->filter(fn (string $field) => isset($data[$field]))
+            ->some(function (string $field) use ($proxy, $data): bool {
+                $current = $proxy->{$field};
+                $current = $current instanceof BackedEnum ? $current->value : $current;
 
-        return false;
+                return (string) $current !== (string) $data[$field];
+            });
     }
 }

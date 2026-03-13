@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import { useProxies } from '@/composables/useProxies'
+import { useToast } from '@/composables/useToast'
 import type { Proxy, ProxyFormData } from '@/types/proxy'
 import ProxyTable from '@/components/ProxyTable.vue'
 import ProxyForm from '@/components/ProxyForm.vue'
@@ -8,7 +9,8 @@ import ConfirmDialog from '@/components/ConfirmDialog.vue'
 import BaseButton from '@/components/ui/BaseButton.vue'
 import BasePagination from '@/components/ui/BasePagination.vue'
 
-const { proxies, meta, loading, error, goToPage, addProxy, editProxy, deleteProxy, checkProxy } = useProxies()
+const { proxies, meta, loading, goToPage, addProxy, editProxy, deleteProxy, checkProxy } = useProxies()
+const toast = useToast()
 
 const showForm      = ref(false)
 const editingProxy  = ref<Proxy | null>(null)
@@ -30,18 +32,26 @@ function closeForm() {
 }
 
 async function handleSubmit(data: ProxyFormData) {
-  if (editingProxy.value) {
-    await editProxy(editingProxy.value.id, data)
-  } else {
-    await addProxy(data)
+  try {
+    if (editingProxy.value) {
+      await editProxy(editingProxy.value.id, data)
+    } else {
+      await addProxy(data)
+    }
+    closeForm()
+  } catch (e: any) {
+    const message = e?.response?.data?.message ?? 'Something went wrong'
+    toast.error(message)
   }
-  closeForm()
 }
 
 async function handleConfirmDelete() {
-  if (deletingProxy.value) {
+  if (!deletingProxy.value) return
+  try {
     await deleteProxy(deletingProxy.value.id)
     deletingProxy.value = null
+  } catch {
+    toast.error('Failed to delete proxy')
   }
 }
 </script>
@@ -53,10 +63,6 @@ async function handleConfirmDelete() {
       <div class="flex items-center justify-between mb-6">
         <h1 class="text-xl font-bold text-gray-800">Proxy Manager</h1>
         <BaseButton @click="openAdd">+ Add proxy</BaseButton>
-      </div>
-
-      <div v-if="error" class="mb-4 rounded bg-red-50 border border-red-200 px-4 py-3 text-sm text-red-700">
-        {{ error }}
       </div>
 
       <div v-if="loading" class="flex justify-center py-16">

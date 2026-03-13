@@ -46,7 +46,7 @@ class ProxyRepository implements ProxyRepositoryInterface
         $proxy->update($data);
         $this->flush();
 
-        return $proxy->fresh();
+        return $proxy->fresh() ?? $proxy;
     }
 
     public function delete(Proxy $proxy): void

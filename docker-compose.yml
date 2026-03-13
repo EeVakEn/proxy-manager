@@ -35,6 +35,7 @@ services:
       dockerfile: Dockerfile
     container_name: proxy_php
     restart: unless-stopped
+    user: "${UID:-1000}:${GID:-1000}"
     working_dir: /var/www/html
     volumes:
       - ./backend:/var/www/html
@@ -54,6 +55,7 @@ services:
       dockerfile: Dockerfile
     container_name: proxy_queue
     restart: unless-stopped
+    user: "${UID:-1000}:${GID:-1000}"
     working_dir: /var/www/html
     command: php artisan queue:work --queue=proxies,default --sleep=3 --tries=3 --timeout=60
     volumes:
@@ -72,6 +74,7 @@ services:
       dockerfile: Dockerfile
     container_name: proxy_scheduler
     restart: unless-stopped
+    user: "${UID:-1000}:${GID:-1000}"
     working_dir: /var/www/html
     command: php artisan schedule:work
     volumes:
