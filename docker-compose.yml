@@ -53,11 +53,10 @@ services:
     build:
       context: ./backend
       dockerfile: Dockerfile
-    container_name: proxy_queue
     restart: unless-stopped
     user: "${UID:-1000}:${GID:-1000}"
     working_dir: /var/www/html
-    command: php artisan queue:work --queue=proxies,default --sleep=3 --tries=3 --timeout=60
+    command: php artisan queue:work --queue=proxies,default --sleep=3 --tries=3 --timeout=15
     volumes:
       - ./backend:/var/www/html
     depends_on:
@@ -67,6 +66,8 @@ services:
         condition: service_started
     networks:
       - proxy_net
+    deploy:
+      replicas: 5
 
   scheduler:
     build:

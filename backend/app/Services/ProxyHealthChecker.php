@@ -7,8 +7,9 @@ use App\Models\Proxy;
 
 class ProxyHealthChecker
 {
-    private const CHECK_URL = 'https://httpbin.org/ip';
-    private const TIMEOUT   = 10;
+    private const CHECK_URL        = 'http://www.gstatic.com/generate_204';
+    private const CONNECT_TIMEOUT  = 5;
+    private const RESPONSE_TIMEOUT = 5;
 
     public function check(Proxy $proxy): bool
     {
@@ -17,8 +18,8 @@ class ProxyHealthChecker
         curl_setopt_array($ch, [
             CURLOPT_URL            => self::CHECK_URL,
             CURLOPT_RETURNTRANSFER => true,
-            CURLOPT_TIMEOUT        => self::TIMEOUT,
-            CURLOPT_CONNECTTIMEOUT => self::TIMEOUT,
+            CURLOPT_CONNECTTIMEOUT => self::CONNECT_TIMEOUT,
+            CURLOPT_TIMEOUT        => self::CONNECT_TIMEOUT + self::RESPONSE_TIMEOUT,
             CURLOPT_PROXY          => $proxy->host,
             CURLOPT_PROXYPORT      => $proxy->port,
             CURLOPT_PROXYTYPE      => $this->resolveCurlProxyType($proxy->type),
@@ -37,7 +38,7 @@ class ProxyHealthChecker
 
         curl_close($ch);
 
-        return $error === 0 && $httpCode >= 200 && $httpCode < 300;
+        return $error === 0 && $httpCode === 204;
     }
 
     private function resolveCurlProxyType(ProxyType $type): int
