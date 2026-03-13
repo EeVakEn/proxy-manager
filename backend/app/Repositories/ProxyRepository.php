@@ -5,18 +5,26 @@ namespace App\Repositories;
 use App\Enums\ProxyStatus;
 use App\Models\Proxy;
 use App\Repositories\Contracts\ProxyRepositoryInterface;
+use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\Cache;
 
 class ProxyRepository implements ProxyRepositoryInterface
 {
-    private const CACHE_KEY = 'proxies.all';
+    private const CACHE_TAG = 'proxies';
     private const CACHE_TTL = 300;
 
     public function all(): Collection
     {
-        return Cache::remember(self::CACHE_KEY, self::CACHE_TTL, function () {
+        return Cache::tags(self::CACHE_TAG)->remember('all', self::CACHE_TTL, function () {
             return Proxy::orderByDesc('created_at')->get();
+        });
+    }
+
+    public function paginate(int $perPage = 15, int $page = 1): LengthAwarePaginator
+    {
+        return Cache::tags(self::CACHE_TAG)->remember("page.{$page}.{$perPage}", self::CACHE_TTL, function () use ($perPage) {
+            return Proxy::orderByDesc('created_at')->paginate($perPage);
         });
     }
 
@@ -64,6 +72,6 @@ class ProxyRepository implements ProxyRepositoryInterface
 
     private function flush(): void
     {
-        Cache::forget(self::CACHE_KEY);
+        Cache::tags(self::CACHE_TAG)->flush();
     }
 }

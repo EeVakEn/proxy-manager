@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\ProxyIndexRequest;
 use App\Http\Requests\StoreProxyRequest;
 use App\Http\Requests\UpdateProxyRequest;
 use App\Http\Resources\ProxyResource;
@@ -19,9 +20,13 @@ class ProxyController extends Controller
         private readonly ProxyService $service,
     ) {}
 
-    public function index(): AnonymousResourceCollection
+    public function index(ProxyIndexRequest $request): AnonymousResourceCollection
     {
-        return ProxyResource::collection($this->repository->all());
+        $validated = $request->validated();
+
+        return ProxyResource::collection(
+            $this->repository->paginate($validated['per_page'], $validated['page'])
+        );
     }
 
     public function store(StoreProxyRequest $request): ProxyResource

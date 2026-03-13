@@ -48,6 +48,42 @@ services:
     networks:
       - proxy_net
 
+  queue:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: proxy_queue
+    restart: unless-stopped
+    working_dir: /var/www/html
+    command: php artisan queue:work --queue=proxies,default --sleep=3 --tries=3 --timeout=60
+    volumes:
+      - ./backend:/var/www/html
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_started
+    networks:
+      - proxy_net
+
+  scheduler:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: proxy_scheduler
+    restart: unless-stopped
+    working_dir: /var/www/html
+    command: php artisan schedule:work
+    volumes:
+      - ./backend:/var/www/html
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_started
+    networks:
+      - proxy_net
+
   frontend:
     build:
       context: ./frontend

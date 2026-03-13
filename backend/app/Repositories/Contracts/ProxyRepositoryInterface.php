@@ -4,11 +4,14 @@ namespace App\Repositories\Contracts;
 
 use App\Enums\ProxyStatus;
 use App\Models\Proxy;
+use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Collection;
 
 interface ProxyRepositoryInterface
 {
     public function all(): Collection;
+
+    public function paginate(int $perPage = 15, int $page = 1): LengthAwarePaginator;
 
     public function findById(int $id): Proxy;
 

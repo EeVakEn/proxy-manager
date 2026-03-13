@@ -8,6 +8,8 @@
 - **Cache / Queue**: Redis 7
 - **Proxy**: Nginx
 
+![img.png](img.png)
+
 ## Quick start
 
 ```bash
